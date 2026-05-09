@@ -1,142 +1,149 @@
 # EC-CUBE IntelliSense
 
-Visual Studio Code上で**EC-CUBE 4.x**の開発をサポートするコード補完・IntelliSense・シグネチャヒント拡張機能です。
+EC-CUBE 4.x 開発向けの Visual Studio Code 拡張機能です。  
+Twig テンプレート・PHP エンティティ・YAML サービス設定に対して、コード補完・引数ヒント・ホバードキュメント・定義ジャンプを提供します。
 
-[拡張機能マーケットプレイス](https://marketplace.visualstudio.com/items?itemName=colscenery.eccube-intellisense)
+---
 
 ## 機能
 
-### Twig — forループの型推論とドットアクセス補完
+### PHP
 
-テンプレート内のすべての`{% for %}`ループを解析し、ループ変数の型を推論します。変数の後に`.`を入力すると、そのメソッドやプロパティがすぐに表示されます。
+**コード補完**
 
-```twig
-{% for Product in pagination %}
-  {# 「Product.」と入力 → getId(), getName(), getProductTag(), ... #}
+- `$entity->` と入力すると、型推論に基づいてエンティティのメソッド・プロパティ候補を表示します。
+- 各候補にはメソッドシグネチャ（引数名・型・戻り値）と説明が表示されます。
+- 型推論は `@var` アノテーション・コンストラクタ引数・`new ClassName()`・`foreach` ループに対応しています。
 
-  {% for Tag in Product.ProductTag %}
-    {# 「Tag」はProductTagエンティティとして解決
-       「Tag.」と入力 → shows getTag(), getProduct(), getId(), ... #}
+**引数ヒント（Signature Help）**
 
-    {{ Tag.Tag }}
-    {# 「Tag.Tag」はMaster\Tagエンティティとして解決
-       任意の識別子にホバーすると型とドキュメントが表示 #}
-  {% endfor %}
-{% endfor %}
-```
+- `$entity->methodName(` と入力するとポップアップが表示され、現在カーソルがある引数の名前・型・説明が強調表示されます。
 
-チェーンドットアクセスは任意の深さまでサポートしています。
+**ホバードキュメント**
 
-### Twig — 引数ヒント（シグネチャヘルプ）
+- `$entity` 変数や `->methodName` の上にマウスを置くと、型情報・メソッドシグネチャ・引数の説明・戻り値の型がポップアップ表示されます。
 
-関数やメソッド名の後に`(`を入力すると、パラメータ名と型を含むシグネチャオーバーレイが表示されます。
+**その他のPHP補完**
 
-例:
-
-- `path(` → `path(route_name, parameters)`
-- `Product.setName(` → `Product::setName(string $name): self`
-
-### PHP — 型推論による補完
-
-`$var->`の補完は、複数の宣言パターンからエンティティ型を解決します。
-
-```php
-/** @var Product $product */            // PHPDocアノテーション
-$product = new Product();               // new式
-function edit(Product $product) { ... } // パラメータ型宣言
-foreach ($products as $product) { ... } // foreach変数
-$product = $orderItem->getProduct();    // メソッド戻り値型のチェーン
-```
-
-上記のいずれかの後に`$product->`と入力すると、Productエンティティのすべてのメソッドとプロパティが完全なシグネチャとともに表示されます。
-
-### PHP — 引数ヒント（シグネチャヘルプ）
-
-`$entity->methodName`の後に`(`を入力すると、完全なシグネチャが表示されます。
-
-```
-Order::setShippingDate(\DateTime|null $shippingDate): self
-                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-```
-
-### ボイラープレートジェネレーター
-
-コマンドパレット（`Ctrl+Shift+P`）を開き、**EC-CUBE: Generate Boilerplate**を実行すると、任意のクラステンプレートをインタラクティブに挿入できます。
+- `->getRepository(` — EC-CUBE エンティティの `::class` 候補を表示します。
+- `getSubscribedEvents()` 内のイベント定数 — EC-CUBE イベント定数の候補を表示します。
+- `path()`・`url()`・`redirectToRoute()` 内のルート名 — ワークスペースのルート名を補完します。
+- `@var`・`use`・型ヒント位置での FQCN — EC-CUBE エンティティ・サービスの完全修飾クラス名を補完します。
+- `eccubeConfig[` — よく使われる設定キーとその説明を補完します。
 
 ---
 
-## PHPスニペット
+### Twig
 
-| プレフィックス | 説明 |
-|---|---|
-| `eccube-entity` | Doctrine ORMアノテーション付きエンティティクラス |
-| `eccube-repository` | `ServiceEntityRepository`を継承したリポジトリ |
-| `eccube-subscriber` | `getSubscribedEvents()`付きEventSubscriber |
-| `eccube-formtype` | FormTypeクラス |
-| `eccube-controller` | `#[Route]`属性付きコントローラー |
-| `eccube-pluginmanager` | 全ライフサイクルメソッド付きPluginManager |
-| `eccube-processor` | PurchaseFlowプロセッサー |
-| `eccube-getrepo` | `$this->entityManager->getRepository(Entity::class)` |
-| `eccube-config` | `$this->eccubeConfig['key']` |
-| `eccube-qb` | Doctrine QueryBuilderテンプレート |
+**ドットアクセス補完**
 
-## Twigスニペット
+- `{{ product.` や `{% if order.` のようにドットを入力すると、エンティティのメソッド・プロパティ候補が表示されます。
+- 各候補には引数名・型・戻り値・説明が表示されます。
 
-| プレフィックス | 説明 |
-|---|---|
-| `eccube-extends` | `{% block main %}`付き`default_frame.html.twig`の継承 |
-| `eccube-price` | `{{ value\|price }}` |
-| `eccube-path` | `{{ path('route_name', {}) }}` |
-| `eccube-asset` | `{{ asset('path') }}` |
-| `eccube-form` | フルフォームレンダ―ブロック |
-| `eccube-csrf` | CSRFトークン入力 + `form_widget(form._token)` |
-| `eccube-raw` | `{{ variable\|raw }}` |
-| `eccube-pagination` | KnpPaginatorページネーションリンク |
+**引数ヒント（Signature Help）**
 
-## YAMLスニペット
+- Twig 関数（例：`asset(`、`path(`）を入力すると引数ヒントが表示されます。
+- エンティティメソッドの呼び出し（例：`product.setName(`）でも引数ヒントが表示されます。
 
-| プレフィックス | 説明 |
-|---|---|
-| `eccube-yaml-subscriber` | EventSubscriberサービス登録 |
-| `eccube-yaml-twig-ext` | Twig拡張サービス登録 |
-| `eccube-yaml-purchaseflow-cart` | 優先度付きCartFlowプロセッサー |
-| `eccube-yaml-purchaseflow-order` | 優先度付きOrderFlowプロセッサー |
+**ホバードキュメント**
+
+- Twig 関数・フィルタ・タグ・変数・エンティティメソッドの上にマウスを置くと詳細な説明がポップアップ表示されます。
+
+**定義ジャンプ（Go to Definition）**
+
+- Twig ファイル内でエンティティのメソッド名を `Ctrl+クリック`（Mac: `Cmd+クリック`）すると、そのメソッドが定義されている PHP ファイルが別タブで開きます。
+- 例：`{{ product.getName }}` の `getName` を Ctrl+クリック → `src/Eccube/Entity/Product.php` の `getName` メソッド定義行へジャンプします。
+- ワークスペース内のカスタムエンティティ（`app/Customize`・`app/Plugin` 以下）にも対応しています。
+
+**その他のTwig補完**
+
+- `{% for item in ... %}` で定義されたループ変数の型推論と補完。
+- `|` 入力後にフィルタ候補を表示。
+- `path(` / `url(` 内でルート名を補完。
+- `extends` / `include` 内でテンプレートパスを補完。
+- `{% %}` 内で Twig タグキーワードを補完。
 
 ---
 
-## サポートされているエンティティ
+### YAML（`services.yaml`）
 
-`Product` · `ProductClass` · `ProductImage` · `ProductTag` · `Tag` · `ProductCategory` · `Customer` · `CustomerAddress` · `Order` · `OrderItem` · `Shipping` · `Cart` · `CartItem` · `Category` · `News` · `BaseInfo` · `Page`
-
----
-
-## 必要条件
-
-- Visual Studio Code 1.80.0以降
-- EC-CUBE 4.2または4.3プロジェクト
+- `name:` の後にEC-CUBE サービスタグ名を補完します（例：`eccube.event_subscriber`）。
+- サービスクラス名（4スペースインデント）の補完。
+- `priority:` の後に PurchaseFlow プロセッサの推奨優先度範囲を補完します。
 
 ---
 
-## 拡張機能の設定
+### スニペット
 
-| 設定 | デフォルト | 説明 |
+コマンドパレット（`Ctrl+Shift+P` / `Cmd+Shift+P`）から `EC-CUBE: Generate Boilerplate` を実行すると、以下のボイラープレートを生成できます。
+
+- **Entity Class** — EC-CUBE エンティティクラスのテンプレート
+- **Repository Class** — リポジトリクラスのテンプレート
+- **EventSubscriber** — イベントサブスクライバのテンプレート
+- **FormType** — フォームタイプのテンプレート
+- **Controller** — コントローラのテンプレート
+- **Plugin PluginManager** — プラグインマネージャのテンプレート
+- **PurchaseFlow Processor** — PurchaseFlow プロセッサのテンプレート
+
+---
+
+## 型推論
+
+以下のパターンから変数の型を推論します。
+
+- `@var EntityName $variable` — PHPDoc アノテーション
+- `function foo(EntityName $variable)` — 関数・コンストラクタの引数型宣言
+- `$variable = new EntityName()` — インスタンス生成
+- `foreach ($collection as $item)` — foreach ループ変数
+- `$result = $variable->getRelation()` — メソッド戻り値チェーン
+
+---
+
+## 動作要件
+
+- Visual Studio Code `1.118.0` 以上
+- EC-CUBE `4.2` または `4.3`
+
+---
+
+## 設定
+
+| 設定項目 | デフォルト | 説明 |
 |---|---|---|
 | `eccubeIntellisense.enable` | `true` | 拡張機能の有効/無効 |
-| `eccubeIntellisense.eccubeVersion` | `"auto"` | EC-CUBEバージョン: `4.2`、`4.3`、または`auto` |
-| `eccubeIntellisense.enablePhpCompletion` | `true` | PHP補完を有効化 |
-| `eccubeIntellisense.enableTwigCompletion` | `true` | Twig補完を有効化 |
-| `eccubeIntellisense.enableYamlCompletion` | `true` | YAML補完を有効化 |
-| `eccubeIntellisense.scanOnStartup` | `true` | 起動時にワークスペースをスキャン |
+| `eccubeIntellisense.eccubeVersion` | `"auto"` | EC-CUBE バージョン（`"4.2"` / `"4.3"` / `"auto"`） |
+| `eccubeIntellisense.enablePhpCompletion` | `true` | PHP IntelliSense の有効/無効 |
+| `eccubeIntellisense.enableTwigCompletion` | `true` | Twig IntelliSense の有効/無効 |
+| `eccubeIntellisense.enableYamlCompletion` | `true` | YAML IntelliSense の有効/無効 |
+| `eccubeIntellisense.scanOnStartup` | `true` | 起動時のワークスペーススキャンの有効/無効 |
 
 ---
 
-## 推奨拡張機能
+## リリースノート
 
-- **Intelephense** — PHP言語サポートと静的解析
-- **Twig Language 2** — Twigシンタックスハイライト
+### 0.0.4
+
+- **新機能**: Twig の定義ジャンプ — `{{ product.getName }}` などのメソッド名を Ctrl+クリックすると、対応する PHP エンティティファイルのメソッド定義行が別タブで開きます。ワークスペース内のカスタムエンティティにも対応。
+- **改善**: PHP ホバードキュメント — `$variable` やメソッド名の上にマウスを置くと、型情報・引数の説明・戻り値の型が表示されるようになりました。
+- **改善**: コード補完候補のドキュメントに引数の詳細説明（名前・型・説明）を表示。
+- **改善**: PHP・Twig の引数ヒントポップアップに引数ごとの説明を表示。
+- **改善**: Twig ホバードキュメントにエンティティメソッドの引数詳細説明を表示。
+
+### 0.0.3
+
+- Twig の foreach ループ型推論とドットアクセス補完。
+- PHP エンティティ補完・引数ヒント・イベント/ルート/FQCN 補完。
+- YAML サービスタグ・優先度補完。
+- ボイラープレート生成コマンド。
 
 ---
 
 ## ライセンス
 
 MIT
+
+---
+
+## リポジトリ
+
+[https://github.com/TakashiHishiki/eccube-intellisense](https://github.com/TakashiHishiki/eccube-intellisense)
