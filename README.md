@@ -144,6 +144,6 @@ MIT
 
 ---
 
-## リポジトリ
+## マーケットプレイス
 
-[https://github.com/TakashiHishiki/eccube-intellisense](https://github.com/TakashiHishiki/eccube-intellisense)
+[https://marketplace.visualstudio.com/items?itemName=colscenery.eccube-intellisense](https://marketplace.visualstudio.com/items?itemName=colscenery.eccube-intellisense)
